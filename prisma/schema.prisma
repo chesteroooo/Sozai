@@ -84,13 +84,35 @@ enum PostType {
   field_guide
 }
 
+// 申請管道
+enum ApplicationType {
+  recommendation // 甄試 / 推甄
+  exam           // 考試
+  application    // 一般申請
+  other
+}
+
+// 申請結果
+enum PostOutcome {
+  admitted   // 錄取 / 上榜
+  waitlisted // 備取
+  rejected   // 未錄取 / 落榜
+}
+
 model Post {
   id        String      @id @default(cuid())
   title     String
   content   String
-  type      PostType
-  tags      String[]
-  authorId  String
+  type        PostType
+  tags        String[]
+  isAnonymous     Boolean          @default(true)
+  // 結構化篩選欄位（可建索引）
+  year            Int? // 入學年（西元，例：2025）
+  applicationType ApplicationType?
+  outcome         PostOutcome?
+  // 各類型專屬雜項（面試形式、準備時長、用書、在校排名區間…）
+  meta            Json?
+  authorId        String
   author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   deptId    String?
   dept      Department? @relation(fields: [deptId], references: [id])
@@ -103,6 +125,9 @@ model Post {
   @@index([deptId])
   @@index([profId])
   @@index([authorId])
+  @@index([year])
+  @@index([applicationType])
+  @@index([outcome])
 }
 
 // ── 使用者 ────────────────────────────────────────────────
@@ -116,6 +141,7 @@ enum UserRole {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  displayName   String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?

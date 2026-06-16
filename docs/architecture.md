@@ -23,10 +23,14 @@ ResearchField（研究方向）
 
 Post（文章）
   id, title, content, type, authorId, deptId, profId, tags String[]
+  isAnonymous（預設 true：前台顯示「匿名」，authorId 仍存真實作者）
+  year, applicationType, outcome, meta Json（結構化篩選欄位，撐起精準查詢）
   type: 'admission_review' | 'exam_note' | 'qa' | 'field_guide'
+  applicationType: 'recommendation' | 'exam' | 'application' | 'other'
+  outcome: 'admitted' | 'waitlisted' | 'rejected'
 
 User
-  id, name, email, image, role
+  id, name, displayName（公開暱稱）, email, image, role
 
 ## 頁面結構
 /                    首頁（搜尋 + 熱門系所 + 熱門研究方向）
