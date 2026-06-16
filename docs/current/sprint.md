@@ -4,10 +4,10 @@
 完成專案初始化與 Prisma Schema
 
 ## 待辦
-- [ ] Prisma schema 寫完（School/Dept/Prof/Post/User/ResearchField）
-- [ ] Supabase 建好 DB，連線測試通過
-- [ ] Google OAuth 登入可用
-- [ ] 首頁靜態版（不需要資料，先把 layout 做出來）
+- [x] Prisma schema 寫完（School/Dept/Prof/Post/User/ResearchField）
+- [x] Supabase 建好 DB，連線測試通過（用 `prisma db push` 建表，尚未導入 migration 歷史）
+- [x] Google OAuth 登入可用
+- [x] 首頁靜態版（不需要資料，先把 layout 做出來）
 
 ## 下週預計
 - 系所頁 API + 前端

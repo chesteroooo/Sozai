@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +8,160 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ── 學校 → 系所 → 教授 結構 ──────────────────────────────
+
+model School {
+  id        String       @id @default(cuid())
+  name      String
+  shortName String?
+  logoUrl   String?
+  depts     Department[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Department {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  schoolId    String
+  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  professors  Professor[]
+  posts       Post[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([schoolId])
+}
+
+model Professor {
+  id            String           @id @default(cuid())
+  name          String
+  researchAreas String[]
+  labName       String?
+  labUrl        String?
+  deptId        String
+  dept          Department       @relation(fields: [deptId], references: [id], onDelete: Cascade)
+  fields        ProfessorField[]
+  posts         Post[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([deptId])
+}
+
+// ── 研究方向（與教授多對多，透過 ProfessorField join table）──
+
+model ResearchField {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  professors  ProfessorField[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ProfessorField {
+  professorId String
+  fieldId     String
+  professor   Professor     @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  field       ResearchField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime      @default(now())
+
+  @@id([professorId, fieldId])
+  @@index([fieldId])
+}
+
+// ── 文章（單一 model + type 欄位，見 ADR-002）──────────────
+
+enum PostType {
+  admission_review
+  exam_note
+  qa
+  field_guide
+}
+
+model Post {
+  id        String      @id @default(cuid())
+  title     String
+  content   String
+  type      PostType
+  tags      String[]
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  deptId    String?
+  dept      Department? @relation(fields: [deptId], references: [id])
+  profId    String?
+  prof      Professor?  @relation(fields: [profId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([type])
+  @@index([deptId])
+  @@index([profId])
+  @@index([authorId])
+}
+
+// ── 使用者 ────────────────────────────────────────────────
+
+enum UserRole {
+  student
+  alumni
+  admin
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(student)
+  posts         Post[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ── Auth.js (NextAuth v5) 需要的資料表 ───────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

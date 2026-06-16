@@ -21,6 +21,14 @@
 - 用 next-auth@beta（v5）搭配 @auth/prisma-adapter。
 - v5 設定方式與 v4 不同（`auth.ts` 匯出 handlers / `auth()`），實作登入時請依 v5 文件，勿套用 v4 寫法。
 
+## 資安 / SSL（已解決）
+- `src/lib/db.ts` 連 Supabase 採**完整 TLS 驗證**：自動讀取 `certs/supabase-ca.crt`（Supabase 官方 CA 憑證，公開資訊、已進版控），用 `ssl: { ca, rejectUnauthorized: true }`。已實測 app 真實查詢透過此驗證連線成功。
+  - 若該憑證檔不存在會自動退回 `rejectUnauthorized: false`（加密但不驗證憑證鏈），確保開發不中斷。
+  - 部署到 Vercel 時憑證會隨 repo 帶上去，正式環境同樣是完整驗證。
+- 所有密鑰只放 `.env`（已 gitignore，從未進版控）。**部署到 Vercel 時改用 Vercel 環境變數**，不要把 `.env` 推上去。
+- 上 Vercel 還要：把 `https://<你的網域>/api/auth/callback/google` 加進 Google OAuth 的 redirect URIs；設 `AUTH_SECRET` / `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` / `DATABASE_URL` 到 Vercel；視情況設 `AUTH_TRUST_HOST=true`。
+- （選用）Supabase DB 密碼偏弱，且密鑰本次以明文輸入過；若要謹慎可在 Supabase / Google Console 重新產生一次。
+
 ## 待設定（尚未完成）
 - [ ] 真正的 `DATABASE_URL`（目前 `.env` 是 placeholder）
 - [ ] Supabase 專案與連線測試
